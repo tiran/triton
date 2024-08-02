@@ -4,6 +4,7 @@ import importlib
 import importlib.util
 import os
 import re
+import shutil
 import subprocess
 import traceback
 from typing import Dict
@@ -109,6 +110,9 @@ def _path_to_binary(binary: str):
     base_dir = os.path.join(os.path.dirname(__file__), os.pardir)
     paths = [
         os.environ.get(f"TRITON_{binary.upper()}_PATH", ""),
+        os.path.join(os.environ.get("CUDA_HOME", "/usr/local/cuda"), "bin", binary),
+        os.path.join(os.environ.get("ROCM_PATH", "/opt/rocm"), "bin", binary),
+        shutil.which(binary) or "",
         os.path.join(base_dir, "third_party", "cuda", "bin", binary)
     ]
 

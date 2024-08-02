@@ -12,6 +12,7 @@ from distutils.command.clean import clean
 from pathlib import Path
 from typing import NamedTuple
 
+import pybind11
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
@@ -96,6 +97,7 @@ def get_llvm_package_info():
 
 
 def open_url(url):
+    raise ValueError(f"Attempting to download {url}")
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0'
     headers = {
         'User-Agent': user_agent,
@@ -105,7 +107,7 @@ def open_url(url):
 
 
 def get_thirdparty_packages(triton_cache_path):
-    packages = [get_pybind11_package_info(), get_llvm_package_info()]
+    packages = [get_llvm_package_info()]
     thirdparty_cmake_args = []
     for p in packages:
         package_root_dir = os.path.join(triton_cache_path, p.package)
@@ -115,6 +117,7 @@ def get_thirdparty_packages(triton_cache_path):
         version_file_path = os.path.join(package_dir, "version.txt")
         if p.syspath_var_name not in os.environ and\
            (not os.path.exists(version_file_path) or Path(version_file_path).read_text() != p.url):
+            raise ValueError(f"Attempting to download {p.name}, set {p.syspath_var_name}")
             try:
                 shutil.rmtree(package_root_dir)
             except Exception:
@@ -137,6 +140,8 @@ def get_thirdparty_packages(triton_cache_path):
 
 
 def download_and_copy(src_path, variable, version, url_func):
+    # disable download
+    return
     if variable in os.environ:
         return
     base_dir = os.path.dirname(__file__)
@@ -246,6 +251,7 @@ class CMakeBuild(build_ext):
             os.makedirs(self.build_temp)
         # python directories
         python_include_dir = sysconfig.get_path("platinclude")
+        build_ut = os.environ.get("TRITON_BUILD_UT", "OFF").upper()
         cmake_args = [
             "-G",
             "Ninja",  # Ninja is much faster than make
@@ -256,9 +262,11 @@ class CMakeBuild(build_ext):
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DTRITON_BUILD_TUTORIALS=OFF",
             "-DTRITON_BUILD_PYTHON_MODULE=ON",
+            f"-DTRITON_BUILD_UT:bool={build_ut}",
             "-DPython3_EXECUTABLE:FILEPATH=" + sys.executable,
             "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON",
             "-DPYTHON_INCLUDE_DIRS=" + python_include_dir,
+            f"-DPYBIND11_INCLUDE_DIR={pybind11.get_include()}",
         ]
         if lit_dir is not None:
             cmake_args.append("-DLLVM_EXTERNAL_LIT=" + lit_dir)
