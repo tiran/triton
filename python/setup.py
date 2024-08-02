@@ -246,6 +246,7 @@ class CMakeBuild(build_ext):
             os.makedirs(self.build_temp)
         # python directories
         python_include_dir = sysconfig.get_path("platinclude")
+        build_ut = os.environ.get("TRITON_BUILD_UT", "OFF").upper()
         cmake_args = [
             "-G",
             "Ninja",  # Ninja is much faster than make
@@ -256,6 +257,7 @@ class CMakeBuild(build_ext):
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DTRITON_BUILD_TUTORIALS=OFF",
             "-DTRITON_BUILD_PYTHON_MODULE=ON",
+            f"-DTRITON_BUILD_UT:bool={build_ut}",
             "-DPython3_EXECUTABLE:FILEPATH=" + sys.executable,
             "-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON",
             "-DPYTHON_INCLUDE_DIRS=" + python_include_dir,
