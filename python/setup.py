@@ -97,6 +97,7 @@ def get_llvm_package_info():
 
 
 def open_url(url):
+    raise ValueError(f"Attempting to download {url}")
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/119.0'
     headers = {
         'User-Agent': user_agent,
@@ -116,6 +117,7 @@ def get_thirdparty_packages(triton_cache_path):
         version_file_path = os.path.join(package_dir, "version.txt")
         if p.syspath_var_name not in os.environ and\
            (not os.path.exists(version_file_path) or Path(version_file_path).read_text() != p.url):
+            raise ValueError(f"Attempting to download {p.name}, set {p.syspath_var_name}")
             try:
                 shutil.rmtree(package_root_dir)
             except Exception:
@@ -138,6 +140,8 @@ def get_thirdparty_packages(triton_cache_path):
 
 
 def download_and_copy(src_path, variable, version, url_func):
+    # disable download
+    return
     if variable in os.environ:
         return
     base_dir = os.path.dirname(__file__)
